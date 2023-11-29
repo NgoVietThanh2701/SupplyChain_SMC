@@ -22,8 +22,7 @@ library Structure {
         uint256 priceThirdParty;
         uint256 feeShip;
         string category;
-        string[] images;
-        string[] imagesThirdParty;
+        string images;
         string description;
         uint256 quantity;
         string temp;

@@ -191,7 +191,7 @@ contract SupplyChain {
         string memory _code,
         uint256 _price,
         string memory _category,
-        string[] memory _images,
+        string memory _images,
         string memory _description,
         uint256 _quantity,
         string memory _longitude,
@@ -229,7 +229,6 @@ contract SupplyChain {
     /// @dev Step 2: Purchase product from Third Party
     function purchaseByThirdParty(uint256 _uid) public harvested(_uid) {
         require(isThirdParty(msg.sender), "Sender is not a Third Party");
-
         require(
             token.balanceOf(msg.sender) >= products[_uid].productDetails.price,
             "Insufficient account balance"
@@ -240,7 +239,6 @@ contract SupplyChain {
             address(this),
             products[_uid].productDetails.price
         );
-
         products[_uid].thirdPartyDetails.thirdParty = msg.sender;
         products[_uid].productState = Structure.State.PurchasedByThirdParty;
 
@@ -285,11 +283,9 @@ contract SupplyChain {
     /// @dev step 5: Third party add attributes for sold product
     function sellByThirdParty(
         uint256 _uid,
-        string[] memory _images,
         uint256 _price
     ) public receivedByThirdParty(_uid) verifyAddress(products[_uid].owner) {
         require(isThirdParty(msg.sender), "Sender is not a Third party");
-        products[_uid].productDetails.imagesThirdParty = _images;
         products[_uid].productDetails.priceThirdParty = _price;
         products[_uid].productState = Structure.State.SoldByThirdParty;
 
@@ -360,16 +356,21 @@ contract SupplyChain {
         uint256 _uid
     ) public shippedByDeliveryHub(_uid) verifyAddress(products[_uid].customer) {
         require(isCustomer(msg.sender), "Sender is not a customer");
+        uint256 amountThirdParty = products[_uid]
+            .productDetails
+            .priceThirdParty -
+            (products[_uid].productDetails.priceThirdParty / 10);
         SafeERC20.safeTransfer(
             token,
             products[_uid].thirdPartyDetails.thirdParty,
-            products[_uid].productDetails.priceThirdParty
+            amountThirdParty
         );
-
+        uint256 amountDeliveryHub = products[_uid].productDetails.feeShip -
+            (products[_uid].productDetails.feeShip / 10);
         SafeERC20.safeTransfer(
             token,
             products[_uid].deliveryHubDetails.deliveryHub,
-            products[_uid].productDetails.feeShip
+            amountDeliveryHub
         );
         products[_uid].owner = msg.sender;
         products[_uid].productState = Structure.State.ReceivedByCustomer;
