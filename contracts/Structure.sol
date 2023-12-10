@@ -20,7 +20,6 @@ library Structure {
         string code;
         uint256 price;
         uint256 priceThirdParty;
-        uint256 feeShip;
         string category;
         string images;
         string description;
@@ -48,6 +47,12 @@ library Structure {
         string latitude;
     }
 
+    struct CustomerDetails {
+        address customer;
+        uint256 feeShip;
+        string addressShip;
+    }
+
     struct Product {
         uint256 uid;
         address owner;
@@ -55,7 +60,7 @@ library Structure {
         FarmerDetails farmerDetails;
         ThirdPartyDetails thirdPartyDetails;
         DeliveryHubDetails deliveryHubDetails;
-        address customer;
+        CustomerDetails customerDetails;
         ProductDetails productDetails;
     }
 

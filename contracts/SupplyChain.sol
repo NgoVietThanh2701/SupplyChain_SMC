@@ -295,12 +295,14 @@ contract SupplyChain {
     /// @dev Step 6: Customer buy product of Third Party
     function purchaseByCustomer(
         uint256 _uid,
-        uint256 _feeShip
+        uint256 _feeShip,
+        string memory _addressShip
     ) public soldByThirdParty(_uid) {
         require(isCustomer(msg.sender), "Sender is not a Customer");
-        products[_uid].customer = msg.sender;
+        products[_uid].customerDetails.customer = msg.sender;
+        products[_uid].customerDetails.feeShip = _feeShip;
+        products[_uid].customerDetails.addressShip = _addressShip;
         products[_uid].productState = Structure.State.PurchasedByCustomer;
-        products[_uid].productDetails.feeShip = _feeShip;
 
         uint256 totalPrice = products[_uid].productDetails.priceThirdParty +
             _feeShip;
@@ -354,7 +356,11 @@ contract SupplyChain {
     /// @dev Step 10: Customer receive product from Delivery hub
     function receiveByCustomer(
         uint256 _uid
-    ) public shippedByDeliveryHub(_uid) verifyAddress(products[_uid].customer) {
+    )
+        public
+        shippedByDeliveryHub(_uid)
+        verifyAddress(products[_uid].customerDetails.customer)
+    {
         require(isCustomer(msg.sender), "Sender is not a customer");
         uint256 amountThirdParty = products[_uid]
             .productDetails
@@ -365,8 +371,8 @@ contract SupplyChain {
             products[_uid].thirdPartyDetails.thirdParty,
             amountThirdParty
         );
-        uint256 amountDeliveryHub = products[_uid].productDetails.feeShip -
-            (products[_uid].productDetails.feeShip / 10);
+        uint256 amountDeliveryHub = products[_uid].customerDetails.feeShip -
+            (products[_uid].customerDetails.feeShip / 10);
         SafeERC20.safeTransfer(
             token,
             products[_uid].deliveryHubDetails.deliveryHub,

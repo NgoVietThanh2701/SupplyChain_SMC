@@ -93,13 +93,13 @@ describe("--- SupplyChain", function () {
       expect(await supplyChain.getProductState(product.uid)).equal(State.SoldByThirdParty);
       // -> Step 6
       product = await supplyChain.getProductByCode("dau");
-      await token.connect(customer).approve(supplyChain.address, product.productDetails.priceThirdParty + product.productDetails.feeShip);
-      await supplyChain.connect(customer).purchaseByCustomer(product.uid, parseEther(5));
+      await token.connect(customer).approve(supplyChain.address, product.productDetails.priceThirdParty + parseEther(5));
+      await supplyChain.connect(customer).purchaseByCustomer(product.uid, parseEther(5), 'Dien duong, dien ban, quang nam');
       product = await supplyChain.getProductByCode("dau");
-      expect(formatEther(await token.balanceOf(customer.address))).equal(balanceCustomer - formatEther(product.productDetails.priceThirdParty) - formatEther(product.productDetails.feeShip));
-      expect(formatEther(await token.balanceOf(supplyChain.address))).equal(balanceContract + formatEther(product.productDetails.priceThirdParty) + formatEther(product.productDetails.feeShip));
+      expect(formatEther(await token.balanceOf(customer.address))).equal(balanceCustomer - formatEther(product.productDetails.priceThirdParty) - formatEther(product.customerDetails.feeShip));
+      expect(formatEther(await token.balanceOf(supplyChain.address))).equal(balanceContract + formatEther(product.productDetails.priceThirdParty) + formatEther(product.customerDetails.feeShip));
       console.log("balance contract step 6 is 55 token |", formatEther(await token.balanceOf(supplyChain.address)));
-      expect(await product.customer).equal(customer.address);
+      expect(await product.customerDetails.customer).equal(customer.address);
       expect(await supplyChain.getProductState(product.uid)).equal(State.PurchasedByCustomer);
       // -> Step 7 
       await supplyChain.connect(thirdParty).shipByThirdParty(product.uid);
@@ -120,7 +120,7 @@ describe("--- SupplyChain", function () {
       product = await supplyChain.getProductByCode("dau");
       expect(formatEther(await token.balanceOf(thirdParty.address))).equal(balanceThirdParty2 + formatEther(product.productDetails.priceThirdParty) - formatEther(product.productDetails.priceThirdParty) / 10);
       console.log("balance of third party step 10 is 1015 token | ", formatEther(await token.balanceOf(thirdParty.address)));
-      expect(formatEther(await token.balanceOf(deliveryHub.address))).equal(balanceDeliveryHub + formatEther(product.productDetails.feeShip) - formatEther(product.productDetails.feeShip) / 10);
+      expect(formatEther(await token.balanceOf(deliveryHub.address))).equal(balanceDeliveryHub + formatEther(product.customerDetails.feeShip) - formatEther(product.customerDetails.feeShip) / 10);
       console.log("balance delivery hub step 10 is 4.5 token |", formatEther(await token.balanceOf(deliveryHub.address)));
       console.log("balance contract step 10 is 5.5 token |", formatEther(await token.balanceOf(supplyChain.address)));
       console.log("balance customer step 10 is 945 |", formatEther(await token.balanceOf(customer.address)));
