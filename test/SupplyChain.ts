@@ -51,7 +51,7 @@ describe("--- SupplyChain", function () {
       await supplyChain.connect(admin).addFarmer(farmer.address);
       await supplyChain.connect(admin).addThirdParty(thirdParty.address);
       await supplyChain.connect(admin).addDeliveryHub(deliveryHub.address);
-      await supplyChain.connect(admin).addCustomer(customer.address);
+      await supplyChain.connect(customer).addCustomer(customer.address);
       await token.transfer(thirdParty.address, parseEther(10 ** 3));
       await token.transfer(customer.address, parseEther(10 ** 3));
       const balanceFarmer = formatEther(await token.balanceOf(farmer.address));
@@ -63,14 +63,14 @@ describe("--- SupplyChain", function () {
       console.log("address thirdparty:", thirdParty.address, "|", balanceThirdParty);
       console.log("address delivery hub:", deliveryHub.address, "|", balanceDeliveryHub);
       console.log("address customer:", customer.address, "|", balanceCustomer);
-      // -> Step 1
-      await supplyChain.connect(farmer).harvestedProduct("Dâu tây", "dau", parseEther(30), "hoa qua", "http/farmer/image1", "dessdadcription", 50, "43242.43", "23432.432", "43.22", 78);
+      // -> Step 1 x
+      await supplyChain.connect(farmer).harvestedProduct("Dâu tây", "dau", parseEther(30), "hoa qua", "http/farmer/image1", "dessdadcription", 50, "43242.43", "23432.432", "43.22", 78, "#codeFarmer");
       let product = await supplyChain.getProductByCode("dau");
       expect((await supplyChain.getProductCount()).toNumber()).equal(1);
       expect(await supplyChain.getProductState(product.uid)).equal(State.Harvested);
-      // -> Step 2
+      // -> Step 2 x
       await token.connect(thirdParty).approve(supplyChain.address, product.productDetails.price);
-      await supplyChain.connect(thirdParty).purchaseByThirdParty(product.uid);
+      await supplyChain.connect(thirdParty).purchaseByThirdParty(product.uid, "#thirdpartycode");
       expect(formatEther(await token.balanceOf(thirdParty.address))).equal(balanceThirdParty - formatEther(product.productDetails.price));
       expect(formatEther(await token.balanceOf(supplyChain.address))).equal(balanceContract + formatEther(product.productDetails.price));
       expect(await supplyChain.getProductState(product.uid)).equal(State.PurchasedByThirdParty);
@@ -91,10 +91,10 @@ describe("--- SupplyChain", function () {
       // -> Step 5
       await supplyChain.connect(thirdParty).sellByThirdParty(product.uid, parseEther(50));
       expect(await supplyChain.getProductState(product.uid)).equal(State.SoldByThirdParty);
-      // -> Step 6
+      // -> Step 6 x
       product = await supplyChain.getProductByCode("dau");
       await token.connect(customer).approve(supplyChain.address, product.productDetails.priceThirdParty + parseEther(5));
-      await supplyChain.connect(customer).purchaseByCustomer(product.uid, parseEther(5), 'Dien duong, dien ban, quang nam');
+      await supplyChain.connect(customer).purchaseByCustomer(product.uid, parseEther(5), 'Dien duong, dien ban, quang nam', "#customerCode");
       product = await supplyChain.getProductByCode("dau");
       expect(formatEther(await token.balanceOf(customer.address))).equal(balanceCustomer - formatEther(product.productDetails.priceThirdParty) - formatEther(product.customerDetails.feeShip));
       expect(formatEther(await token.balanceOf(supplyChain.address))).equal(balanceContract + formatEther(product.productDetails.priceThirdParty) + formatEther(product.customerDetails.feeShip));
@@ -105,8 +105,8 @@ describe("--- SupplyChain", function () {
       await supplyChain.connect(thirdParty).shipByThirdParty(product.uid);
       product = await supplyChain.getProductByCode("dau");
       expect(product.productState).equal(State.ShippedByThirdParty);
-      // -> Step 8
-      await supplyChain.connect(deliveryHub).receiveByDeliveryHub(product.uid, "443.4", "6765.332");
+      // -> Step 8 x
+      await supplyChain.connect(deliveryHub).receiveByDeliveryHub(product.uid, "443.4", "6765.332", "deliveryHubcode");
       product = await supplyChain.getProductByCode("dau");
       expect(product.owner).equal(deliveryHub.address);
       expect(product.productState).equal(State.ReceivedByDeliveryHub);
@@ -136,15 +136,15 @@ describe("--- SupplyChain", function () {
       await expect(supplyChain.connect(farmer).addThirdParty(thirdParty.address)).revertedWith("Sender is not a admin");
    });
    it("Should not create product, Sender is not a farmer!", async () => {
-      await expect(supplyChain.connect(farmer).harvestedProduct("Dâu tây", "dau", parseEther(30), "hoa qua", "http/farmer/image1", "dessdadcription", 50, "43242.43", "23432.432", "43.22", 78)).revertedWith("Sender is not a Farmer!");
+      await expect(supplyChain.connect(farmer).harvestedProduct("Dâu tây", "dau", parseEther(30), "hoa qua", "http/farmer/image1", "dessdadcription", 50, "43242.43", "23432.432", "43.22", 78, "#codefarmer")).revertedWith("Sender is not a Farmer!");
    });
    it("Should buy product, Insufficient account balance", async () => {
       await supplyChain.connect(admin).addFarmer(farmer.address);
       await supplyChain.connect(admin).addThirdParty(thirdParty.address);
-      await supplyChain.connect(farmer).harvestedProduct("Dâu tây", "dau", parseEther(30), "hoa qua", "http/farmer/image1", "dessdadcription", 50, "43242.43", "23432.432", "43.22", 78);
+      await supplyChain.connect(farmer).harvestedProduct("Dâu tây", "dau", parseEther(30), "hoa qua", "http/farmer/image1", "dessdadcription", 50, "43242.43", "23432.432", "43.22", 78, "#codefarmer");
       let product = await supplyChain.getProductByCode("dau");
       await token.connect(thirdParty).approve(supplyChain.address, product.productDetails.price);
-      await expect(supplyChain.connect(thirdParty).purchaseByThirdParty(1)).revertedWith("Insufficient account balance");
+      await expect(supplyChain.connect(thirdParty).purchaseByThirdParty(1, "#codeTPT")).revertedWith("Insufficient account balance");
    })
 });
 

@@ -169,7 +169,7 @@ contract SupplyChain {
         return false;
     }
 
-    function addCustomer(address _account) public onlyAdmin {
+    function addCustomer(address _account) public {
         require(_account != address(0));
         roles[Structure.Roles.Customer].push(_account);
     }
@@ -197,7 +197,8 @@ contract SupplyChain {
         string memory _longitude,
         string memory _latitude,
         string memory _temp,
-        uint32 _humidity
+        uint32 _humidity,
+        string memory _farmerCode
     ) public {
         require(isFarmer(msg.sender), "Sender is not a Farmer!");
         Structure.Product memory product;
@@ -205,6 +206,7 @@ contract SupplyChain {
         product.owner = msg.sender;
         /* set role for farmer */
         product.farmerDetails.farmer = msg.sender;
+        product.farmerDetails.farmerCode = _farmerCode;
         product.farmerDetails.longitude = _longitude;
         product.farmerDetails.latitude = _latitude;
         /* set details for product*/
@@ -227,7 +229,10 @@ contract SupplyChain {
     }
 
     /// @dev Step 2: Purchase product from Third Party
-    function purchaseByThirdParty(uint256 _uid) public harvested(_uid) {
+    function purchaseByThirdParty(
+        uint256 _uid,
+        string memory _thirdPartyCode
+    ) public harvested(_uid) {
         require(isThirdParty(msg.sender), "Sender is not a Third Party");
         require(
             token.balanceOf(msg.sender) >= products[_uid].productDetails.price,
@@ -240,6 +245,7 @@ contract SupplyChain {
             products[_uid].productDetails.price
         );
         products[_uid].thirdPartyDetails.thirdParty = msg.sender;
+        products[_uid].thirdPartyDetails.thirdPartyCode = _thirdPartyCode;
         products[_uid].productState = Structure.State.PurchasedByThirdParty;
 
         emit PurchasedByThirdParty(_uid);
@@ -296,10 +302,12 @@ contract SupplyChain {
     function purchaseByCustomer(
         uint256 _uid,
         uint256 _feeShip,
-        string memory _addressShip
+        string memory _addressShip,
+        string memory _customerCode
     ) public soldByThirdParty(_uid) {
         require(isCustomer(msg.sender), "Sender is not a Customer");
         products[_uid].customerDetails.customer = msg.sender;
+        products[_uid].customerDetails.customerCode = _customerCode;
         products[_uid].customerDetails.feeShip = _feeShip;
         products[_uid].customerDetails.addressShip = _addressShip;
         products[_uid].productState = Structure.State.PurchasedByCustomer;
@@ -331,11 +339,13 @@ contract SupplyChain {
     function receiveByDeliveryHub(
         uint256 _uid,
         string memory _longitude,
-        string memory _latitude
+        string memory _latitude,
+        string memory _deliveryHubCode
     ) public shippedByThirdParty(_uid) {
         require(isDeliveryHub(msg.sender), "Sender is not a Delivery Hub");
         products[_uid].owner = msg.sender;
         products[_uid].deliveryHubDetails.deliveryHub = msg.sender;
+        products[_uid].deliveryHubDetails.deliveryHubCode = _deliveryHubCode;
         products[_uid].deliveryHubDetails.longitude = _longitude;
         products[_uid].deliveryHubDetails.latitude = _latitude;
         products[_uid].productState = Structure.State.ReceivedByDeliveryHub;

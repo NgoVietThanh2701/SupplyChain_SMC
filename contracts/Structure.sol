@@ -31,24 +31,28 @@ library Structure {
 
     struct FarmerDetails {
         address farmer;
+        string farmerCode;
         string longitude;
         string latitude;
     }
 
     struct ThirdPartyDetails {
         address thirdParty;
+        string thirdPartyCode;
         string longitude;
         string latitude;
     }
 
     struct DeliveryHubDetails {
         address deliveryHub;
+        string deliveryHubCode;
         string longitude;
         string latitude;
     }
 
     struct CustomerDetails {
         address customer;
+        string customerCode;
         uint256 feeShip;
         string addressShip;
     }
